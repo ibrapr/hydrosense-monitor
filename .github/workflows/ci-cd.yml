@@ -1,0 +1,85 @@
+name: HydroSense Monitor CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    # Set up Python for backend
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+        
+    # Set up Node.js for frontend
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    # Install backend dependencies
+    - name: Install backend dependencies
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    # Install frontend dependencies
+    - name: Install frontend dependencies
+      run: |
+        cd frontend
+        npm install
+        
+    # Run backend tests
+    - name: Run backend tests
+      run: |
+        cd backend
+        pytest tests/ -v
+        
+    # Run frontend tests
+    - name: Run frontend tests
+      run: |
+        cd frontend
+        npm test -- --watchAll=false
+        
+    # Build frontend
+    - name: Build frontend
+      run: |
+        cd frontend
+        npm run build
+        
+    # Optional: Build and push Docker images
+    - name: Set up Docker Buildx
+      if: github.ref == 'refs/heads/main'
+      uses: docker/setup-buildx-action@v2
+      
+    - name: Login to Docker Hub
+      if: github.ref == 'refs/heads/main'
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_TOKEN }}
+        
+    - name: Build and push backend Docker image
+      if: github.ref == 'refs/heads/main'
+      uses: docker/build-push-action@v4
+      with:
+        context: ./backend
+        push: true
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/hydrosense-backend:latest
+        
+    - name: Build and push frontend Docker image
+      if: github.ref == 'refs/heads/main'
+      uses: docker/build-push-action@v4
+      with:
+        context: ./frontend
+        push: true
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/hydrosense-frontend:latest 
