@@ -26,6 +26,14 @@ function App() {
     return difference > 0 ? '↑' : '↓';
   };
 
+  const getTrendClass = (trend: string) => {
+    switch (trend) {
+      case '↑': return 'trend-up';
+      case '↓': return 'trend-down';
+      default: return 'trend-stable';
+    }
+  };
+
   const fetchReadings = async () => {
     const res = await fetch(`http://localhost:8000/api/readings/${unitId}`);
     const data = await res.json();
@@ -59,58 +67,82 @@ function App() {
 
     const result = await res.json();
     setClassification(result.classification);
-    fetchReadings(); // refresh readings list
+    fetchReadings();
   };
 
   return (
     <div className="App">
-      <h1>HydroSense Monitor</h1>
+      <header className="header">
+        <h1>HydroSense Monitor</h1>
+      </header>
 
-      <div>
+      <div className="filter-buttons">
         <input
           type="text"
           placeholder="Enter Unit ID"
           value={unitId}
           onChange={(e) => setUnitId(e.target.value)}
+          className="unit-input"
         />
-        <button onClick={fetchReadings}>Show All Readings</button>
-        <button onClick={fetchAlerts}>Show Alerts Only</button>
-        <button onClick={sendRandomReading}>Send Random Reading</button>
-        {classification && <p>Last Classification: <b>{classification}</b></p>}
+        <button 
+          className={`filter-button ${!showingAlerts ? 'active' : ''}`} 
+          onClick={fetchReadings}
+        >
+          Show All Readings
+        </button>
+        <button 
+          className={`filter-button ${showingAlerts ? 'active' : ''}`} 
+          onClick={fetchAlerts}
+        >
+          Show Alerts Only
+        </button>
+        <button className="filter-button" onClick={sendRandomReading}>
+          Send Random Reading
+        </button>
       </div>
 
-      <table style={{ marginTop: '20px', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr>
-            <th>Timestamp</th>
-            <th>pH</th>
-            <th>Temp</th>
-            <th>EC</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {(showingAlerts ? alerts : readings).map((item, idx) => (
-            <tr
-              key={idx}
-              style={{
-                backgroundColor: item.classification === 'Needs Attention' ? '#ffcccc' : '#ccffcc',
-              }}
-            >
-              <td>{item.timestamp}</td>
-              <td>
-                {item.readings.pH} 
-                <span style={{ marginLeft: '5px', fontWeight: 'bold' }}>
-                  {getPHTrendIndicator(item.readings.pH, showingAlerts ? alerts : readings, idx)}
-                </span>
-              </td>
-              <td>{item.readings.temp}</td>
-              <td>{item.readings.ec}</td>
-              <td>{item.classification}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {classification && (
+        <div className={`status-banner ${classification === 'Healthy' ? 'status-healthy' : 'status-attention'}`}>
+          Last Reading Status: <strong>{classification}</strong>
+        </div>
+      )}
+
+      <div className="readings-container">
+        {(showingAlerts ? alerts : readings).map((item, idx) => (
+          <div 
+            key={idx} 
+            className={`reading-card ${item.classification === 'Needs Attention' ? 'status-attention' : 'status-healthy'}`}
+          >
+            <div className="reading-timestamp">{new Date(item.timestamp).toLocaleString()}</div>
+            
+            <div className="reading-values">
+              <div className="reading-group">
+                <div className="reading-label">pH Level</div>
+                <div className="reading-value">
+                  {item.readings.pH}
+                  <span className={`trend-indicator ${getTrendClass(getPHTrendIndicator(item.readings.pH, showingAlerts ? alerts : readings, idx))}`}>
+                    {getPHTrendIndicator(item.readings.pH, showingAlerts ? alerts : readings, idx)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="reading-group">
+                <div className="reading-label">Temperature</div>
+                <div className="reading-value">{item.readings.temp}°C</div>
+              </div>
+
+              <div className="reading-group">
+                <div className="reading-label">EC Level</div>
+                <div className="reading-value">{item.readings.ec} mS/cm</div>
+              </div>
+            </div>
+
+            <div className={`reading-status ${item.classification === 'Healthy' ? 'status-healthy' : 'status-attention'}`}>
+              {item.classification}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
