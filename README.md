@@ -179,11 +179,17 @@ We have implemented two critical test cases to ensure robust operation in real-w
 5. Check status classifications for each reading
 
 ![image](https://github.com/user-attachments/assets/907a53f9-1336-4ee6-bf1c-402f2cb2b9ad)
+
 "Send Random Reading" button:
+
 ![image](https://github.com/user-attachments/assets/40ed2024-65b8-47a6-89d0-52df8632c010)
+
 "Show All Readings" button(shows all readings Healthy/Need Attention last 10 readings):
+
 ![image](https://github.com/user-attachments/assets/1511c2ce-097d-40a8-a438-b9c0a2cef0d3)
+
 "Show Alerts Only" button(shows only all Need Attention readings last 10 readings):
+
 ![image](https://github.com/user-attachments/assets/5323bfeb-154e-45d3-ae17-1135c404bb78)
 
 
